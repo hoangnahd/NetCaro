@@ -44,6 +44,7 @@ namespace caro_project
 
             int selectRoom = int.Parse(comboBox1?.SelectedItem?.ToString());
             roomId = room2port[selectRoom];
+            MessageBox.Show(roomId.ToString());
             Username = textBox1.Text;
             chessRoom room = new chessRoom();
             room.ShowDialog();
