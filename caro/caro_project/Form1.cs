@@ -48,5 +48,19 @@ namespace caro_project
             chessRoom room = new chessRoom();
             room.ShowDialog();
         }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            var openForms = Application.OpenForms.Cast<Form>().ToList();
+
+            // Close each form
+            foreach (var form in openForms)
+            {
+                form.Close();
+            }
+
+            // Exit the application
+            Application.Exit();
+        }
     }
 }

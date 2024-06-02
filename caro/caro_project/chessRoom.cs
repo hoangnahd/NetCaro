@@ -24,6 +24,7 @@ namespace caro_project
         private List<Player> players = new List<Player>();
         private int port = Form1.roomId;
         private string auth;
+        private Server server = new Server();
         private string GenerateRandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -57,7 +58,7 @@ namespace caro_project
             }
             catch
             {
-                Server server = new Server();
+                
                 server.Connect();
                 tcpClient = new TcpClient();
                 tcpClient.Connect("127.0.0.1", port);
@@ -356,6 +357,15 @@ namespace caro_project
         }
         private void chessRoom_FormClosing(object sender, FormClosingEventArgs e)
         {
+            var openForms = Application.OpenForms.Cast<Form>().ToList();
+
+            // Close each form
+            foreach (var form in openForms)
+            {
+                form.Close();
+            }
+
+            // Exit the application
             Application.Exit();
         }
         private void tmCoolDown_Tick(object sender, EventArgs e)
@@ -384,6 +394,13 @@ namespace caro_project
                 // Increment the progress bar
                 prbCoolDown.PerformStep();
             }
-        }      
+        }
+
+        private void newGameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            server.Stop();
+            CreateChessBoard();
+            players.Clear();
+        }
     }
 }
