@@ -398,9 +398,6 @@ namespace caro_project
 
         private void newGameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            server.Stop();
-            CreateChessBoard();
-            players.Clear();
         }
     }
 }
