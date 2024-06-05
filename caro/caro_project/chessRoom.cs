@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
@@ -46,7 +47,7 @@ namespace caro_project
             try
             {
                 tcpClient = new TcpClient();
-                tcpClient.Connect(serverIp, port);
+                tcpClient.Connect(IPAddress.Parse(serverIp), port);
                 stream = tcpClient.GetStream();
                 Console.WriteLine("Connected to server");
 
@@ -70,7 +71,7 @@ namespace caro_project
 
                 try
                 {
-                    tcpClient.Connect("127.0.0.1", port);
+                    tcpClient.Connect(IPAddress.Parse("127.0.0.1"), port);
                     stream = tcpClient.GetStream();
                     Console.WriteLine("Connected to new server");
 
@@ -102,7 +103,8 @@ namespace caro_project
             Username.Text = Form1.Username;
 
             string serverIp = GetLocalIPAddress();
-
+            MessageBox.Show(serverIp);
+            txbIp.Text = serverIp;
 
             try
             {
@@ -111,7 +113,7 @@ namespace caro_project
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect to the server: {ex.Message}");
-                MessageBox.Show("Failed to connect to the server. Starting a new server...", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to connect to the server. Starting a new server2...", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 Server server = new Server();
                 server.Start();
