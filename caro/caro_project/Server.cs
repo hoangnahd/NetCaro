@@ -117,13 +117,13 @@ namespace caro_project
             }
         }
 
-        public string GetLocalIPAddress(NetworkInterfaceType _type)
+        public string GetLocalIPAddress()
         {
-            foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
+            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (item.NetworkInterfaceType == _type && item.OperationalStatus == OperationalStatus.Up)
+                if (ni.OperationalStatus == OperationalStatus.Up)
                 {
-                    foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
+                    foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
                     {
                         if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
                         {
@@ -133,6 +133,7 @@ namespace caro_project
                 }
             }
             throw new Exception("No network adapters with an IPv4 address in the system!");
+
         }
     }
 }

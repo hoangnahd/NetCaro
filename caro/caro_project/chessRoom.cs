@@ -41,67 +41,103 @@ namespace caro_project
             CreateChessBoard();
             InitializeCoolDownTimer();
         }
-        private void connect2server()
+        public void Connect(string serverIp, int port)
         {
-            Username.Enabled = false;
-            Username.Text = Form1.Username;
-            
-            tcpClient = new TcpClient();
-
             try
             {
-                // Try to connect to the existing server
-                tcpClient.Connect(cons.serverIP, 1234);
-                
-                txbIp.Text = server.GetLocalIPAddress(NetworkInterfaceType.Wireless80211);
+                tcpClient = new TcpClient();
+                tcpClient.Connect(serverIp, port);
                 stream = tcpClient.GetStream();
-                players.Clear();
+                Console.WriteLine("Connected to server");
+
                 auth = GenerateRandomString(20);
-                players.Add(new Player(Username.Text, "../../../icon/player2.jpg", false, auth));
+                players.Add(new Player(Form1.Username, "../../../icon/player2.jpg", false, auth));
                 players[0].startCoolDown = true;
 
                 string jsonData = JsonConvert.SerializeObject(players);
                 SendData(jsonData);
-                Console.WriteLine("Connected to server.");
-            }
-            catch (SocketException)
-            {
-                Console.WriteLine("Failed to connect to server. Starting a new server...");
 
-                // Start a new server if connection fails
-                server = new Server();
+                Thread receiveThread = new Thread(new ThreadStart(ReceiveData));
+                receiveThread.Start();
+            }
+            catch (SocketException ex)
+            {
+                Console.WriteLine($"Connection error: {ex.Message}");
+                MessageBox.Show("Failed to connect to the server. Starting a new server...", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                Server server = new Server();
                 server.Start();
 
-                // Attempt to connect again
                 try
                 {
-                    tcpClient.Connect("127.0.0.1", 1234);
-                    MessageBox.Show(server.GetLocalIPAddress(NetworkInterfaceType.Wireless80211));
-                    txbIp.Text = server.GetLocalIPAddress(NetworkInterfaceType.Wireless80211);
+                    tcpClient.Connect("127.0.0.1", port);
                     stream = tcpClient.GetStream();
-                    players.Clear();
+                    Console.WriteLine("Connected to new server");
+
                     auth = GenerateRandomString(20);
-                    players.Add(new Player(Username.Text, "../../../icon/player1.jpg", true, auth));
+                    players.Add(new Player(Form1.Username, "../../../icon/player1.jpg", true, auth));
                     players[0].startCoolDown = true;
 
                     string jsonData = JsonConvert.SerializeObject(players);
                     SendData(jsonData);
-                    Console.WriteLine("Connected to new server.");
+
+                    Thread receiveThread = new Thread(new ThreadStart(ReceiveData));
+                    receiveThread.Start();
                 }
-                catch (SocketException ex)
+                catch (Exception ex2)
                 {
-                    MessageBox.Show($"Failed to connect to new server: {ex.Message}");
-                    // Handle the exception or exit the function
-                    return;
+                    Console.WriteLine($"Failed to connect to new server: {ex2.Message}");
+                    MessageBox.Show("Failed to start a new server and connect to it.", "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-
-            // Proceed with setting up the player and communication
-            
-
-            Thread receiveThread = new Thread(new ThreadStart(ReceiveData));
-            receiveThread.Start();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+                MessageBox.Show("An unexpected error occurred while trying to connect to the server.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+        private void connect2server()
+        {
+            Username.Enabled = false;
+            Username.Text = Form1.Username;
+
+            string serverIp = GetLocalIPAddress();
+
+
+            try
+            {
+                Connect(serverIp, 1234);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to connect to the server: {ex.Message}");
+                MessageBox.Show("Failed to connect to the server. Starting a new server...", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                Server server = new Server();
+                server.Start();
+
+                Connect("127.0.0.1", 1234);
+            }
+        }
+
+        private string GetLocalIPAddress()
+        {
+            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus == OperationalStatus.Up)
+                {
+                    foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            return ip.Address.ToString();
+                        }
+                    }
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
+
 
         private void InitializeCoolDownTimer()
         {
