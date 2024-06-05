@@ -36,14 +36,13 @@ namespace caro_project
             room2port[1] = 1234;
             room2port[2] = 80;
 
-            if (string.IsNullOrEmpty(textBox1.Text) || comboBox1.SelectedItem == null)
+            if (string.IsNullOrEmpty(textBox1.Text) || string.IsNullOrEmpty(textBox2.Text))
             {
                 MessageBox.Show("Please enter your username or select a room!");
                 return;
             }
 
-            int selectRoom = int.Parse(comboBox1?.SelectedItem?.ToString());
-            roomId = room2port[selectRoom];
+            cons.serverIP = textBox2.Text.Trim();
             Username = textBox1.Text;
             chessRoom room = new chessRoom();
             room.ShowDialog();

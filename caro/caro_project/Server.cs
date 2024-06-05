@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
 using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Threading;
 using Newtonsoft.Json;
-using System.Collections.Concurrent;
 
 namespace caro_project
 {
@@ -18,16 +15,17 @@ namespace caro_project
         private List<TcpClient> clients = new List<TcpClient>();
         private List<Player> players = new List<Player>();
         private bool isFull = false;
-        private int port = Form1.roomId;
 
-        public void Connect()
+        public void Start()
         {
-            tcpListener = new TcpListener(IPAddress.Any, port);
+            tcpListener = new TcpListener(IPAddress.Any, 1234);
             tcpListener.Start();
+            Console.WriteLine("Server started, waiting for clients...");
 
             // Start accepting client connections asynchronously
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnection), null);
         }
+
         private void HandleClientConnection(IAsyncResult ar)
         {
             if (clients.Count >= 2)
@@ -43,6 +41,7 @@ namespace caro_project
 
             TcpClient client = tcpListener.EndAcceptTcpClient(ar);
             clients.Add(client);
+            Console.WriteLine("Client connected");
 
             // Start listening for messages from the client
             Thread receiveThread = new Thread(new ParameterizedThreadStart(ReceiveData));
@@ -51,7 +50,6 @@ namespace caro_project
             // Continue accepting more client connections
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnection), null);
         }
-
 
         private void ReceiveData(object clientObj)
         {
@@ -67,9 +65,16 @@ namespace caro_project
                 {
                     // Read data from the client
                     bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    if (bytesRead == 0)
+                    {
+                        // Connection closed
+                        break;
+                    }
+
                     string dataReceived = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     List<Player> jsonData = JsonConvert.DeserializeObject<List<Player>>(dataReceived);
-                    if (players.Count != 2)
+
+                    if (players.Count < 2)
                     {
                         players.Add(jsonData[0]);
                     }
@@ -78,7 +83,6 @@ namespace caro_project
                         players = jsonData;
                         isFull = true;
                     }
-                        
 
                     Broadcast(JsonConvert.SerializeObject(players));
                 }
@@ -88,17 +92,47 @@ namespace caro_project
                     break;
                 }
             }
+
+            // Clean up when the client disconnects
             stream.Close();
             client.Close();
+            clients.Remove(client);
+            Console.WriteLine("Client disconnected");
         }
+
         private void Broadcast(string message)
         {
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
             foreach (TcpClient client in clients)
             {
-                NetworkStream stream = client.GetStream();
-                byte[] buffer = Encoding.UTF8.GetBytes(message);
-                stream.Write(buffer, 0, buffer.Length);
+                try
+                {
+                    NetworkStream stream = client.GetStream();
+                    stream.Write(buffer, 0, buffer.Length);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Broadcast error: {ex.Message}");
+                }
             }
+        }
+
+        public string GetLocalIPAddress(NetworkInterfaceType _type)
+        {
+            foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (item.NetworkInterfaceType == _type && item.OperationalStatus == OperationalStatus.Up)
+                {
+                    foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            return ip.Address.ToString();
+                        }
+                    }
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
         }
     }
 }

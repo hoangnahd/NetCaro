@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -24,6 +26,7 @@ namespace caro_project
         private List<Player> players = new List<Player>();
         private int port = Form1.roomId;
         private string auth;
+        private NetworkStream stream;
         private Server server = new Server();
         private string GenerateRandomString(int length)
         {
@@ -42,37 +45,64 @@ namespace caro_project
         {
             Username.Enabled = false;
             Username.Text = Form1.Username;
+            
+            tcpClient = new TcpClient();
+
             try
             {
-
-                tcpClient = new TcpClient();
-                tcpClient.Connect("127.0.0.1", port);
+                // Try to connect to the existing server
+                tcpClient.Connect(cons.serverIP, 1234);
+                
+                txbIp.Text = server.GetLocalIPAddress(NetworkInterfaceType.Wireless80211);
+                stream = tcpClient.GetStream();
                 players.Clear();
                 auth = GenerateRandomString(20);
                 players.Add(new Player(Username.Text, "../../../icon/player2.jpg", false, auth));
                 players[0].startCoolDown = true;
+
                 string jsonData = JsonConvert.SerializeObject(players);
                 SendData(jsonData);
-                Thread receiveThread = new Thread(new ThreadStart(ReceiveData));
-                receiveThread.Start();
+                Console.WriteLine("Connected to server.");
             }
-            catch
+            catch (SocketException)
             {
-                
-                server.Connect();
-                tcpClient = new TcpClient();
-                tcpClient.Connect("127.0.0.1", port);
-                players.Clear();
-                auth = GenerateRandomString(20);
-                players.Add(new Player(Username.Text, "../../../icon/player1.jpg", true, auth));
-                players[0].startCoolDown = true;
-                string jsonData = JsonConvert.SerializeObject(players);
-                SendData(jsonData);
-                Thread receiveThread = new Thread(new ThreadStart(ReceiveData));
-                receiveThread.Start();
+                Console.WriteLine("Failed to connect to server. Starting a new server...");
+
+                // Start a new server if connection fails
+                server = new Server();
+                server.Start();
+
+                // Attempt to connect again
+                try
+                {
+                    tcpClient.Connect("127.0.0.1", 1234);
+                    MessageBox.Show(server.GetLocalIPAddress(NetworkInterfaceType.Wireless80211));
+                    txbIp.Text = server.GetLocalIPAddress(NetworkInterfaceType.Wireless80211);
+                    stream = tcpClient.GetStream();
+                    players.Clear();
+                    auth = GenerateRandomString(20);
+                    players.Add(new Player(Username.Text, "../../../icon/player1.jpg", true, auth));
+                    players[0].startCoolDown = true;
+
+                    string jsonData = JsonConvert.SerializeObject(players);
+                    SendData(jsonData);
+                    Console.WriteLine("Connected to new server.");
+                }
+                catch (SocketException ex)
+                {
+                    MessageBox.Show($"Failed to connect to new server: {ex.Message}");
+                    // Handle the exception or exit the function
+                    return;
+                }
             }
+
+            // Proceed with setting up the player and communication
             
+
+            Thread receiveThread = new Thread(new ThreadStart(ReceiveData));
+            receiveThread.Start();
         }
+
         private void InitializeCoolDownTimer()
         {
             prbCoolDown.Step = cons.coolDownstep;
@@ -83,13 +113,11 @@ namespace caro_project
         }
         private void SendData(string message)
         {
-            NetworkStream stream = tcpClient.GetStream();
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             stream.Write(buffer, 0, buffer.Length);
         }
         private void ReceiveData()
         {
-            NetworkStream stream = tcpClient.GetStream();
             byte[] buffer = new byte[2048];
             int bytesRead;
 
