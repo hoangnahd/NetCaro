@@ -18,7 +18,7 @@ namespace caro_project
 
         public void Start()
         {
-            tcpListener = new TcpListener(IPAddress.Any, 1234);
+            tcpListener = new TcpListener(IPAddress.Loopback, 1234);
             tcpListener.Start();
             Console.WriteLine("Server started, waiting for clients...");
 

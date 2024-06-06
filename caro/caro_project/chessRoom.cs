@@ -47,7 +47,8 @@ namespace caro_project
             try
             {
                 tcpClient = new TcpClient();
-                tcpClient.Connect(IPAddress.Parse(serverIp), port);
+                tcpClient.Connect(IPAddress.Parse("127.0.0.1"), port);
+               
                 stream = tcpClient.GetStream();
                 Console.WriteLine("Connected to server");
 
@@ -105,21 +106,7 @@ namespace caro_project
             string serverIp = GetLocalIPAddress();
             MessageBox.Show(serverIp);
             txbIp.Text = serverIp;
-
-            try
-            {
-                Connect(serverIp, 1234);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to connect to the server: {ex.Message}");
-                MessageBox.Show("Failed to connect to the server. Starting a new server2...", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                Server server = new Server();
-                server.Start();
-
-                Connect("127.0.0.1", 1234);
-            }
+            Connect(serverIp, 1234);
         }
 
         private string GetLocalIPAddress()
@@ -139,7 +126,6 @@ namespace caro_project
             }
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
-
 
         private void InitializeCoolDownTimer()
         {
