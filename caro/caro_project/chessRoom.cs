@@ -25,7 +25,6 @@ namespace caro_project
         
         private TcpClient tcpClient;
         private List<Player> players = new List<Player>();
-        private int port = Form1.roomId;
         private string auth;
         private NetworkStream stream;
         private Server server = new Server();
@@ -46,8 +45,7 @@ namespace caro_project
         {
             try
             {
-                tcpClient = new TcpClient();
-                tcpClient.Connect(IPAddress.Parse("127.0.0.1"), port);
+                tcpClient = new TcpClient("192.168.11.1", port);
                
                 stream = tcpClient.GetStream();
                 Console.WriteLine("Connected to server");
@@ -72,7 +70,7 @@ namespace caro_project
 
                 try
                 {
-                    tcpClient.Connect(IPAddress.Parse("127.0.0.1"), port);
+                    tcpClient = new TcpClient("192.168.11.1", port);
                     stream = tcpClient.GetStream();
                     Console.WriteLine("Connected to new server");
 

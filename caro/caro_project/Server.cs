@@ -18,7 +18,7 @@ namespace caro_project
 
         public void Start()
         {
-            tcpListener = new TcpListener(IPAddress.Loopback, 1234);
+            tcpListener = new TcpListener(IPAddress.Parse("192.168.11.1"), 1234);
             tcpListener.Start();
             Console.WriteLine("Server started, waiting for clients...");
 
@@ -28,24 +28,42 @@ namespace caro_project
 
         private void HandleClientConnection(IAsyncResult ar)
         {
-            if (clients.Count >= 2)
+            TcpClient client = null;
+            try
             {
-                TcpClient Client = tcpListener.EndAcceptTcpClient(ar);
-                NetworkStream stream = Client.GetStream();
-                byte[] buffer = Encoding.UTF8.GetBytes("Room is full");
-                stream.Write(buffer, 0, buffer.Length);
-                stream.Close();
-                Client.Close();
-                return; // If two clients are already connected, do not accept more connections
+                client = tcpListener.EndAcceptTcpClient(ar);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Listener has been stopped, exit gracefully
+                return;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error accepting client: {ex.Message}");
+                return;
             }
 
-            TcpClient client = tcpListener.EndAcceptTcpClient(ar);
-            clients.Add(client);
-            Console.WriteLine("Client connected");
+            if (clients.Count >= 2)
+            {
+                // Room is full, inform the client and close connection
+                using (NetworkStream stream = client.GetStream())
+                {
+                    byte[] buffer = Encoding.UTF8.GetBytes("Room is full");
+                    stream.Write(buffer, 0, buffer.Length);
+                }
+                client.Close();
+                Console.WriteLine("Rejected client connection - room is full.");
+            }
+            else
+            {
+                // Add client to list and start a new thread to receive data
+                clients.Add(client);
+                Console.WriteLine("Client connected.");
 
-            // Start listening for messages from the client
-            Thread receiveThread = new Thread(new ParameterizedThreadStart(ReceiveData));
-            receiveThread.Start(client);
+                Thread receiveThread = new Thread(new ParameterizedThreadStart(ReceiveData));
+                receiveThread.Start(client);
+            }
 
             // Continue accepting more client connections
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnection), null);
