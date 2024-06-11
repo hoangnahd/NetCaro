@@ -15,48 +15,32 @@ namespace caro_project
         private List<TcpClient> clients = new List<TcpClient>();
         private List<Player> players = new List<Player>();
         private bool isFull = false;
-
-        public void Start()
+        public void Start(string serverIp)
         {
-            tcpListener = new TcpListener(IPAddress.Parse("192.168.11.1"), 1234);
+            tcpListener = new TcpListener(IPAddress.Parse(serverIp), cons.port);
             tcpListener.Start();
             Console.WriteLine("Server started, waiting for clients...");
 
             // Start accepting client connections asynchronously
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnection), null);
         }
-
         private void HandleClientConnection(IAsyncResult ar)
         {
-            TcpClient client = null;
-            try
-            {
-                client = tcpListener.EndAcceptTcpClient(ar);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Listener has been stopped, exit gracefully
-                return;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error accepting client: {ex.Message}");
-                return;
-            }
 
             if (clients.Count >= 2)
             {
-                // Room is full, inform the client and close connection
-                using (NetworkStream stream = client.GetStream())
-                {
-                    byte[] buffer = Encoding.UTF8.GetBytes("Room is full");
-                    stream.Write(buffer, 0, buffer.Length);
-                }
-                client.Close();
-                Console.WriteLine("Rejected client connection - room is full.");
+                TcpClient Client = tcpListener.EndAcceptTcpClient(ar);
+                NetworkStream stream = Client.GetStream();
+                byte[] buffer = Encoding.UTF8.GetBytes("Room is full");
+                stream.Write(buffer, 0, buffer.Length);
+                stream.Close();
+                Client.Close();
+                return; // If two clients are already connected, do not accept more connections
             }
             else
             {
+                TcpClient client = null;
+                client = tcpListener.EndAcceptTcpClient(ar);
                 // Add client to list and start a new thread to receive data
                 clients.Add(client);
                 Console.WriteLine("Client connected.");
@@ -68,7 +52,6 @@ namespace caro_project
             // Continue accepting more client connections
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleClientConnection), null);
         }
-
         private void ReceiveData(object clientObj)
         {
             TcpClient client = (TcpClient)clientObj;
@@ -92,7 +75,7 @@ namespace caro_project
                     string dataReceived = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     List<Player> jsonData = JsonConvert.DeserializeObject<List<Player>>(dataReceived);
 
-                    if (players.Count < 2)
+                    if (players.Count != 2)
                     {
                         players.Add(jsonData[0]);
                     }
@@ -117,7 +100,6 @@ namespace caro_project
             clients.Remove(client);
             Console.WriteLine("Client disconnected");
         }
-
         private void Broadcast(string message)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(message);
@@ -134,7 +116,6 @@ namespace caro_project
                 }
             }
         }
-
         public string GetLocalIPAddress()
         {
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())

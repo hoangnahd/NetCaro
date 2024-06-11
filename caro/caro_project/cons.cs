@@ -14,6 +14,7 @@ namespace caro_project
         public static int coolDownstep = 10;
         public static int coolDownTime = 10000;
         public static int coolDownInterval = 10;
-        public static string serverIP = "0";
+        public static string serverIP;
+        public static int port;
     }
 }

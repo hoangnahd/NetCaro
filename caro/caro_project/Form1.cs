@@ -25,6 +25,7 @@ namespace caro_project
         }
         static public string Username;
         static public int roomId;
+        static public string ip = "";
         private Dictionary<int, int> room2port = new Dictionary<int, int>();
         
         private void Form1_Load(object sender, EventArgs e)
@@ -33,16 +34,14 @@ namespace caro_project
 
         private void button2_Click(object sender, EventArgs e)
         {
-            room2port[1] = 1234;
-            room2port[2] = 80;
-
-            if (string.IsNullOrEmpty(textBox1.Text) || string.IsNullOrEmpty(textBox2.Text))
+            ip = textBox2.Text;
+            if (string.IsNullOrEmpty(textBox1.Text))
             {
                 MessageBox.Show("Please enter your username or select a room!");
                 return;
             }
 
-            cons.serverIP = textBox2.Text.Trim();
+            cons.port = 1234;
             Username = textBox1.Text;
             chessRoom room = new chessRoom();
             room.ShowDialog();
@@ -61,5 +60,36 @@ namespace caro_project
             // Exit the application
             Application.Exit();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ip = textBox2.Text;
+            if (string.IsNullOrEmpty(textBox1.Text))
+            {
+                MessageBox.Show("Please enter your username or select a room!");
+                return;
+            }
+
+            cons.port = 8080;
+            Username = textBox1.Text;
+            chessRoom room = new chessRoom();
+            room.ShowDialog();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            ip = textBox2.Text;
+            if (string.IsNullOrEmpty(textBox1.Text))
+            {
+                MessageBox.Show("Please enter your username or select a room!");
+                return;
+            }
+
+            cons.port = 9999;
+            Username = textBox1.Text;
+            chessRoom room = new chessRoom();
+            room.ShowDialog();
+        }
+
     }
 }

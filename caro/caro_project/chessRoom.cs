@@ -45,7 +45,7 @@ namespace caro_project
         {
             try
             {
-                tcpClient = new TcpClient("192.168.11.1", port);
+                tcpClient = new TcpClient(serverIp, port);
                
                 stream = tcpClient.GetStream();
                 Console.WriteLine("Connected to server");
@@ -62,15 +62,12 @@ namespace caro_project
             }
             catch (SocketException ex)
             {
-                Console.WriteLine($"Connection error: {ex.Message}");
-                MessageBox.Show("Failed to connect to the server. Starting a new server...", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
                 Server server = new Server();
-                server.Start();
+                server.Start(serverIp);
 
                 try
                 {
-                    tcpClient = new TcpClient("192.168.11.1", port);
+                    tcpClient = new TcpClient(serverIp, port);
                     stream = tcpClient.GetStream();
                     Console.WriteLine("Connected to new server");
 
@@ -101,12 +98,11 @@ namespace caro_project
             Username.Enabled = false;
             Username.Text = Form1.Username;
 
-            string serverIp = GetLocalIPAddress();
-            MessageBox.Show(serverIp);
-            txbIp.Text = serverIp;
-            Connect(serverIp, 1234);
+            cons.serverIP = GetLocalIPAddress();
+            IPAddress _;
+            txbIp.Text = IPAddress.TryParse(Form1.ip, out _) ? Form1.ip : cons.serverIP;
+            Connect(txbIp.Text, cons.port);
         }
-
         private string GetLocalIPAddress()
         {
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
@@ -115,7 +111,7 @@ namespace caro_project
                 {
                     foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
                     {
-                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip.Address))
                         {
                             return ip.Address.ToString();
                         }
@@ -124,7 +120,6 @@ namespace caro_project
             }
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
-
         private void InitializeCoolDownTimer()
         {
             prbCoolDown.Step = cons.coolDownstep;
@@ -445,9 +440,18 @@ namespace caro_project
                 prbCoolDown.PerformStep();
             }
         }
-
-        private void newGameToolStripMenuItem_Click(object sender, EventArgs e)
+        private void quitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var openForms = Application.OpenForms.Cast<Form>().ToList();
+
+            // Close each form
+            foreach (var form in openForms)
+            {
+                form.Close();
+            }
+
+            // Exit the application
+            Application.Exit();
         }
     }
 }
