@@ -37,7 +37,7 @@ namespace caro_project
             ip = textBox2.Text;
             if (string.IsNullOrEmpty(textBox1.Text))
             {
-                MessageBox.Show("Please enter your username or select a room!");
+                MessageBox.Show("Please enter your username!");
                 return;
             }
 
@@ -66,7 +66,7 @@ namespace caro_project
             ip = textBox2.Text;
             if (string.IsNullOrEmpty(textBox1.Text))
             {
-                MessageBox.Show("Please enter your username or select a room!");
+                MessageBox.Show("Please enter your username!");
                 return;
             }
 
@@ -81,7 +81,7 @@ namespace caro_project
             ip = textBox2.Text;
             if (string.IsNullOrEmpty(textBox1.Text))
             {
-                MessageBox.Show("Please enter your username or select a room!");
+                MessageBox.Show("Please enter your username!");
                 return;
             }
 
