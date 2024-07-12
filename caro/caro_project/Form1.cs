@@ -28,9 +28,6 @@ namespace caro_project
         static public string ip = "";
         private Dictionary<int, int> room2port = new Dictionary<int, int>();
         
-        private void Form1_Load(object sender, EventArgs e)
-        {
-        }
 
         private void button2_Click(object sender, EventArgs e)
         {
@@ -59,36 +56,6 @@ namespace caro_project
 
             // Exit the application
             Application.Exit();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            ip = textBox2.Text;
-            if (string.IsNullOrEmpty(textBox1.Text))
-            {
-                MessageBox.Show("Please enter your username!");
-                return;
-            }
-
-            cons.port = 8080;
-            Username = textBox1.Text;
-            chessRoom room = new chessRoom();
-            room.ShowDialog();
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            ip = textBox2.Text;
-            if (string.IsNullOrEmpty(textBox1.Text))
-            {
-                MessageBox.Show("Please enter your username!");
-                return;
-            }
-
-            cons.port = 9999;
-            Username = textBox1.Text;
-            chessRoom room = new chessRoom();
-            room.ShowDialog();
         }
 
     }

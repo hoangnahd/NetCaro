@@ -138,6 +138,7 @@
             // 
             // txbIp
             // 
+            this.txbIp.Enabled = false;
             this.txbIp.Location = new System.Drawing.Point(94, 157);
             this.txbIp.Name = "txbIp";
             this.txbIp.Size = new System.Drawing.Size(250, 22);
@@ -186,7 +187,7 @@
             // quitToolStripMenuItem
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(120, 26);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 
